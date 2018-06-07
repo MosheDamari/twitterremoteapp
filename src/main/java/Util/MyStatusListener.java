@@ -1,26 +1,25 @@
 package Util;
-
-
-import DB.DataStorage;
-import Objects.TwitterObj;
-import Util.LinkExtractor;
+import com.amazonaws.services.sqs.AmazonSQS;
+import com.amazonaws.services.sqs.model.SendMessageRequest;
 import twitter4j.*;
+
 
 public class MyStatusListener implements StatusListener
 {
-    private DataStorage db = null;
+    private AmazonSQS sqs = null;
+    String urlQueue = "";
     public void onStatus(Status status)
     {
-        LinkExtractor extract = new LinkExtractor();
-        URLEntity[] urls = status.getURLEntities();
 
-        if (urls.length > 0)
-        {
-            for (URLEntity url : urls) {
+        String tJson = TwitterObjectFactory.getRawJSON(status);
 
-                db.addLink(extract.extractContent(url,status));
-            }
-        }
+
+        SendMessageRequest send_msg_request = new SendMessageRequest()
+                .withQueueUrl(urlQueue)
+                .withMessageBody(tJson)
+                .withDelaySeconds(5);
+        sqs.sendMessage(send_msg_request);
+
     }
 
     public void onDeletionNotice(StatusDeletionNotice statusDeletionNotice) {
@@ -43,9 +42,10 @@ public class MyStatusListener implements StatusListener
 
     }
 
-    MyStatusListener(DataStorage store)
+    MyStatusListener(AmazonSQS sqs,String urlQueue)
     {
-        this.db = store;
+        this.urlQueue=urlQueue;
+        this.sqs = sqs;
     }
 
 }

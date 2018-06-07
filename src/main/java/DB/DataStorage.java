@@ -1,15 +1,63 @@
 package DB;
 
 import Objects.TwitterObj;
+import com.amazonaws.services.sqs.AmazonSQS;
+import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
+import com.amazonaws.services.sqs.model.Message;
+
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 
 /**
  * Abstraction layer for database access
  */
 public class DataStorage {
+
+
+  public static void main(String[] args)
+  {
+    Connection con = null;
+    try {
+      Class.forName("com.mysql.cj.jdbc.Driver");
+      String dbName = args[0];
+      String userName = args[1];
+      String password = args[2];
+      String hostname = args[3];
+      String port = args[4];
+      String jdbcUrl = "jdbc:mysql://" + hostname + ":" + port + "/" + dbName + "?user=" + userName + "&password=" + password;
+      con = DriverManager.getConnection(jdbcUrl);
+      Statement statement = con.createStatement();
+      String twitTable = "CREATE TABLE twitTable " +
+              "(id INTEGER not NULL , " +
+              " name VARCHAR(256), " +
+              " title VARCHAR(256), " +
+              " link VARCHAR(256), " +
+              " content VARCHAR(256), " +
+              " image VARCHAR(256), " +
+              " disc VARCHAR(256), " +
+              " date_created DATE, " +
+              " PRIMARY KEY ( id ))";
+      statement.executeUpdate(twitTable);
+
+    }
+    catch (ClassNotFoundException e) { System.out.println(e);}
+    catch (SQLException e) {System.out.println(e);}
+
+    AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
+    while(true) {
+      List<Message> messages = sqs.receiveMessage(args[5]).getMessages();
+      for (Message m : messages)
+      {
+        AddLink(new TwitterObj(m.getBody()),con);
+        sqs.deleteMessage(args[5], m.getReceiptHandle());
+      }
+    }
+
+  }
   Connection conn;
   int count = 1,newID = 1;
 
@@ -40,13 +88,14 @@ public class DataStorage {
   /**
    * Add link to the database
    */
-  public void addLink(TwitterObj twitt)
+  public static void  AddLink(TwitterObj twitt,Connection con)
   {
-
+    Connection conn = con;
     // create a sql date object so we can use it in our INSERT statement
     Calendar calendar = Calendar.getInstance();
     java.sql.Date date_created = new java.sql.Date(calendar.getTime().getTime());
-
+    int count =0;
+    int newID = 0 ;
     // create the mysql insert preparedstatement
     try {
 

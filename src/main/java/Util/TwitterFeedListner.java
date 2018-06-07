@@ -1,7 +1,8 @@
 package Util;
 
 import DB.DataStorage;
-import Util.MyStatusListener;
+import com.amazonaws.services.sqs.AmazonSQS;
+import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import twitter4j.*;
 import twitter4j.conf.ConfigurationBuilder;
 
@@ -10,24 +11,37 @@ public class TwitterFeedListner
 {
     // Create our configuration
     private DataStorage storage;
+
     private ConfigurationBuilder cb;
     TwitterStreamFactory tf;
     TwitterStream twitterStream;
     MyStatusListener listener;
+    public static void main(String[] args)
+    {
+        String setOAuthConsumerKey, setOAuthConsumerSecret, setOAuthAccessToken,setOAuthAccessTokenSecret;
+        setOAuthConsumerKey = args[0];
+        setOAuthConsumerSecret = args[1];
+        setOAuthAccessToken = args[2];
+        setOAuthAccessTokenSecret = args[3];
+        String urlQueue = args[4];
+        AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
+        TwitterFeedListner mosheTwitter = new TwitterFeedListner(setOAuthConsumerKey ,setOAuthConsumerSecret, setOAuthAccessToken, setOAuthAccessTokenSecret ,sqs,urlQueue);
+        mosheTwitter.Listen();
+    }
 
-
-    public TwitterFeedListner(String setOAuthConsumerKey, String setOAuthConsumerSecret, String setOAuthAccessToken, String setOAuthAccessTokenSecret, DataStorage store)
+    public TwitterFeedListner(String setOAuthConsumerKey, String setOAuthConsumerSecret, String setOAuthAccessToken, String setOAuthAccessTokenSecret, AmazonSQS sqs , String urlQueue)
     {
         cb = new ConfigurationBuilder()
                 .setOAuthConsumerKey(setOAuthConsumerKey)
                 .setOAuthConsumerSecret(setOAuthConsumerSecret)
                 .setOAuthAccessToken(setOAuthAccessToken)
-                .setOAuthAccessTokenSecret(setOAuthAccessTokenSecret);
+                .setOAuthAccessTokenSecret(setOAuthAccessTokenSecret)
+                .setJSONStoreEnabled(true);
 
         tf = new TwitterStreamFactory(cb.build());
         twitterStream = tf.getInstance();
 
-        listener = new MyStatusListener(store);
+        listener = new MyStatusListener(sqs,urlQueue);
         twitterStream.addListener(listener);
     }
 
