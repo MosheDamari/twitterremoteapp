@@ -25,7 +25,7 @@ import java.util.List;
 public class LinkExtractor {
   public static void main(String[] args)
   {
-    AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
+    AmazonSQS sqs = AmazonSQSClientBuilder.standard().withRegion("eu-west-1").build();
     while(true) {
       List<Message> messages = sqs.receiveMessage(args[4]).getMessages();
       for (Message m : messages) {
@@ -33,16 +33,16 @@ public class LinkExtractor {
           Status status = TwitterObjectFactory.createStatus(m.getBody());
           TwitterObj obj = extractContent(status);
           if (obj == null) {
-            sqs.deleteMessage(args[4], m.getReceiptHandle());
+            sqs.deleteMessage(args[0], m.getReceiptHandle());
           }
           else
           {
             SendMessageRequest send_msg_request = new SendMessageRequest()
-                    .withQueueUrl(args[5])
+                    .withQueueUrl(args[1])
                     .withMessageBody(obj.ToJson().toString())
                     .withDelaySeconds(5);
             sqs.sendMessage(send_msg_request);
-            sqs.deleteMessage(args[4], m.getReceiptHandle());
+            sqs.deleteMessage(args[0], m.getReceiptHandle());
           }
         } catch (TwitterException e) {
           e.printStackTrace();
@@ -60,7 +60,7 @@ public class LinkExtractor {
     {
     try {
       doc = Jsoup.connect(url.getExpandedURL()).get();
-      myObj = new TwitterObj(status.getUser().getName(),url.getExpandedURL(),doc.text(),gen.takeScreenshot(url.getExpandedURL()),doc.title(),"");
+      myObj = new TwitterObj(status.getUser().getName(),url.getExpandedURL(),doc.text(),url.getExpandedURL(),doc.title(),"");
 
     } catch (IOException e) {
       e.printStackTrace();

@@ -7,7 +7,7 @@ public class ScreenshotGenerator {
     String screenshotFilePath = null;
 
     try {
-      Runtime.getRuntime().exec("/Users/moshedamari/Icloud/Cloud/src/main/resources/SlimerJSScreenshot/slimerjs-1.0.0/slimerjs --headless screenshot.js " + url + " " + url+".png");
+      Runtime.getRuntime().exec("C:\\Users\\Admin\\twitterremoteapp\\src\\main\\resources\\SlimerJSScreenshot " + url + " " + url+".png");
     } catch (IOException e) {
       e.printStackTrace();
     }

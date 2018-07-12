@@ -49,7 +49,7 @@ public class DataStorage {
     catch (ClassNotFoundException e) { System.out.println(e);}
     catch (SQLException e) {System.out.println(e);}
 
-    AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
+    AmazonSQS sqs = AmazonSQSClientBuilder.standard().withRegion("eu-west-1").build();
     while(true) {
       List<Message> messages = sqs.receiveMessage(args[5]).getMessages();
       for (Message m : messages)
