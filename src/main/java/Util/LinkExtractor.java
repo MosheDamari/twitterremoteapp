@@ -7,14 +7,13 @@ import com.amazonaws.services.sqs.model.AmazonSQSException;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.SendMessageBatchRequest;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
+import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import twitter4j.Status;
-import twitter4j.TwitterException;
-import twitter4j.TwitterObjectFactory;
-import twitter4j.URLEntity;
+import twitter4j.*;
+import twitter4j.conf.ConfigurationBuilder;
 
 import java.io.IOException;
 import java.util.List;
@@ -23,15 +22,17 @@ import java.util.List;
  * Extract content from links
  */
 public class LinkExtractor {
+
   public static void main(String[] args)
   {
+    ConfigurationBuilder cb;
     AmazonSQS sqs = AmazonSQSClientBuilder.standard().withRegion("eu-west-1").build();
     while(true) {
-      List<Message> messages = sqs.receiveMessage(args[4]).getMessages();
+      List<Message> messages = sqs.receiveMessage(args[0]).getMessages();
       for (Message m : messages) {
-        try {
-          Status status = TwitterObjectFactory.createStatus(m.getBody());
-          TwitterObj obj = extractContent(status);
+          org.json.JSONObject jObj2 = new JSONObject(m.getBody());
+          try {
+            TwitterObj obj = extractContent(jObj2);
           if (obj == null) {
             sqs.deleteMessage(args[0], m.getReceiptHandle());
           }
@@ -44,27 +45,32 @@ public class LinkExtractor {
             sqs.sendMessage(send_msg_request);
             sqs.deleteMessage(args[0], m.getReceiptHandle());
           }
-        } catch (TwitterException e) {
-          e.printStackTrace();
+          }
+          catch(IOException e)
+          {
+            sqs.deleteMessage(args[0], m.getReceiptHandle());
+          }
         }
       }
     }
-  }
-  public static TwitterObj extractContent(Status status)
-  {
+
+  public static TwitterObj extractContent(org.json.JSONObject obj) throws IOException {
     ScreenshotGenerator gen = new ScreenshotGenerator();
     Document doc = null;
     TwitterObj myObj = null;
+    Status status = null;
+    try {
+      status = TwitterObjectFactory.createStatus(obj.toString());
+    } catch (TwitterException e) {
+      e.printStackTrace();
+    }
     URLEntity[] urlEntitys = status.getURLEntities();
     for (URLEntity url: urlEntitys)
     {
-    try {
-      doc = Jsoup.connect(url.getExpandedURL()).get();
-      myObj = new TwitterObj(status.getUser().getName(),url.getExpandedURL(),doc.text(),url.getExpandedURL(),doc.title(),"");
 
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
+      doc = Jsoup.connect(url.getExpandedURL()).get();
+      myObj = new TwitterObj(status.getUser().getName(),url.getExpandedURL(),doc.text(),url.getExpandedURL(),doc.title(),"",obj.get("Track").toString());
+
     Elements metaTag =  doc.getElementsByTag("meta");
     for (Element tag:metaTag)
     {

@@ -1,6 +1,7 @@
 package Util;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
+import org.json.JSONObject;
 import twitter4j.*;
 
 
@@ -8,11 +9,13 @@ public class MyStatusListener implements StatusListener
 {
     private AmazonSQS sqs = null;
     String urlQueue = "";
+    String track = "";
     public void onStatus(Status status)
     {
 
-        String tJson = TwitterObjectFactory.getRawJSON(status);
-
+        org.json.JSONObject obj = new JSONObject( TwitterObjectFactory.getRawJSON(status));
+        obj.append("Track",this.track);
+        String tJson = obj.toString();
 
         SendMessageRequest send_msg_request = new SendMessageRequest()
                 .withQueueUrl(urlQueue)
@@ -42,10 +45,11 @@ public class MyStatusListener implements StatusListener
 
     }
 
-    MyStatusListener(AmazonSQS sqs,String urlQueue)
+    MyStatusListener(AmazonSQS sqs,String urlQueue,String track)
     {
         this.urlQueue=urlQueue;
         this.sqs = sqs;
+        this.track = track;
     }
 
 }

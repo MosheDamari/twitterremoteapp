@@ -5,11 +5,12 @@ import org.json.JSONObject;
 public class TwitterObj
 {
   String name;
-  String title;
   String link;
+  String title;
+  String disc;
   String content;
   String image;
-  String disc;
+  String track;
 
 
   public TwitterObj()
@@ -20,9 +21,11 @@ public class TwitterObj
         this.link = "";
         this.image = "";
         this.disc = "";
+        this.track = "";
+
     }
 
-    public TwitterObj(String name, String link, String content, String image, String title , String disc)
+    public TwitterObj(String name, String link, String content, String image, String title , String disc,String track )
   {
       this.content = content;
       this.name = name;
@@ -30,6 +33,7 @@ public class TwitterObj
       this.link = link;
       this.image = image;
       this.disc = disc;
+      this.track = track;
 
   }
 
@@ -77,13 +81,17 @@ public class TwitterObj
         return disc;
     }
 
+    public String getTrack() {
+        return track;
+    }
+
     public void setDisc(String disc) {
         this.disc = disc;
     }
 
     public void PrintTwitterObj()
     {
-        System.out.println("UserName is: " + name + "\n" + "The Link:" +  link + "\n" + "The website Content is: " + content + "\n" + "The website title is: " + title + "\n"+ "The website Description  is: " + disc + "\n");
+        System.out.println("UserName is: " + name + "\n" + "The Link:" +  link + "\n" + "The website Content is: " + content + "\n" + "The website title is: " + title + "\n"+ "The website Description  is: " + disc + "\n" + "The search is: " + track + "\n");
     }
     public JSONObject ToJson()
     {
@@ -94,6 +102,7 @@ public class TwitterObj
         obj.append("title",this.title);
         obj.append("Description",this.disc);
         obj.append("Image",this.image);
+        obj.append("Track",this.track);
         return obj;
     }
     public TwitterObj(String s)
@@ -105,5 +114,6 @@ public class TwitterObj
         this.title = obj.get("title").toString();
         this.disc = obj.get("Description").toString();
         this.image = obj.get("Image").toString();
+        this.track = obj.get("Track").toString();
     }
 }
